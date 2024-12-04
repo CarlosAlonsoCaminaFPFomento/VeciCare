@@ -1,9 +1,9 @@
-# Red de Apoyo Comunitaria para Personas Mayores
+# VeciCare
 Aplicación Android para conectar personas mayores con voluntarios
 
 ## Descripción
 
-La **Red de Apoyo Comunitaria para Personas Mayores** es una aplicación diseñada para conectar a personas mayores con voluntarios o vecinos dispuestos a ayudarlas con tareas diarias y actividades sociales. El objetivo principal es fomentar la inclusión social, la colaboración intergeneracional y la mejora de la calidad de vida de las personas mayores.
+**VeciCare** es una aplicación diseñada para conectar a personas mayores con voluntarios o vecinos dispuestos a ayudarlas con tareas diarias y actividades sociales. El objetivo principal es fomentar la inclusión social, la colaboración intergeneracional y la mejora de la calidad de vida de las personas mayores.
 
 ---
 
