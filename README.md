@@ -61,4 +61,4 @@ Esta aplicación busca impactar positivamente en la comunidad, promoviendo el ap
 
 1. Clona este repositorio:
    ```bash
-   git clone https://github.com/tu-usuario/red-apoyo-comunitaria.git
+   git clone https://github.com/tu-usuario/VeciCare.git
