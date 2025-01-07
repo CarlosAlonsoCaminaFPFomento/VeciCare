@@ -7,7 +7,7 @@ val LightPrimaryColor = Color(0xFF1E88E5) //Azul vibrante
 val LightSecondaryColor = Color(0xFF00ACC1) //Turquesa
 val LightBackgroundColor = Color(0xFFF9F9F9) //Crema claro
 val LightSurfaceColor = Color(0xFFFFFFFF) //Blanco puro
-val LightOnPrimaryColor = Color(0xFFFFFFFF) //Testo blanco sobre azul
+val LightOnPrimaryColor = Color(0xFFFFFFFF) //Texto blanco sobre azul
 val LightOnSecondaryColor = Color(0xFF000000) //Texto negro sobre turquesa
 val LightOnBackgroundColor = Color(0xFF000000) //Texto negro sobre fondo claro
 val LightGradientStart = LightPrimaryColor.copy(alpha = 0.8f) //Azul vibrante con transparencia

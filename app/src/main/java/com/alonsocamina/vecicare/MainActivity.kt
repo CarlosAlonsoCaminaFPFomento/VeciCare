@@ -35,6 +35,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.alonsocamina.vecicare.ui.theme.VeciCareTheme
 import com.alonsocamina.vecicare.ui.theme.gradientBrush
+import android.util.Log
+import androidx.room.Room
+import com.alonsocamina.vecicare.ui.theme.VolunteerDatabase
+import com.alonsocamina.vecicare.ui.theme.VolunteerTask
+
 
 data class ActivityItem(val name: String, val iconRes: Int)
 
@@ -51,13 +56,59 @@ val activities = listOf(
 )
 
 class MainActivity : ComponentActivity() {
+    private lateinit var database: VolunteerDatabase //Base de datos
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("LifecycleMainActivity", "onCreate llamado: Configuración inicial de la app.")
+
+        //Inicialización de Room
+        val database = Room.databaseBuilder(
+            applicationContext,
+            VolunteerDatabase::class.java,
+            "volunteer_database" //Nombre de la base de datos
+        ).build()
+        Log.d("Database", "Base de datos inicializada")
+
+        //Creación de la interfaz del usuario
         setContent {
             VeciCareTheme {
                 MainScreen()
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.d("LifecycleMainActivity", "onStart llamado: La app está visible pero no interactiva.")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d("LifecycleMainActivity", "onResume llamado: La app está visible e interactiva.")
+        //Aquí se podría actualizar/cargar datos en la interfaz, por ejemplo
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d("LifecycleMainActivity", "onPause llamado: La app está perdiendo el foco.")
+        //Se podría guardar el progreso de tareas en curso
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d("LifecycleMainActivity", "onStop llamado: La app ya no está visible.")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("LifecycleMainActivity", "onDestroy llamado: Liberando recursos antes de que la Activity se destruya.")
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        Log.d("LifecycleMainActivity", "onLowMemory llamado: El sistema tiene poca memoria.")
+        //Implementación de lógica para liberar recursos no críticos, como limpiar cache por ejemplo
     }
 }
 
@@ -193,7 +244,7 @@ fun ThemedImage(modifier: Modifier = Modifier) {
 
 @Preview(showBackground = true, name = "Light Mode")
 @Composable
-fun PreviewLightTheme() {
+private fun PreviewLightTheme() {
     VeciCareTheme(darkTheme = false) {
         MainScreen()
     }
@@ -201,7 +252,7 @@ fun PreviewLightTheme() {
 
 @Preview(showBackground = true, name = "Dark Mode")
 @Composable
-fun PreviewDarkTheme() {
+private fun PreviewDarkTheme() {
     VeciCareTheme(darkTheme = true) {
         MainScreen()
     }
