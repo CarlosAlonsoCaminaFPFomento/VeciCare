@@ -78,7 +78,7 @@ VeciCare busca impactar positivamente en la comunidad, promoviendo el apoyo mutu
 
 ---
 
-## Cómo Contribuir
+## Cómo Contribuir con el proyecto
 
 1. Clona este repositorio:
    ```bash
