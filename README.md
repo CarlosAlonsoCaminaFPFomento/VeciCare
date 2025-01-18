@@ -20,7 +20,13 @@ Aplicación Android para conectar personas mayores con voluntarios.
    - Registro y participación en eventos.
 
 3. **Gestión de Actividades de Voluntariado:**
-   - Una lista dinámica de actividades, obtenida de una base de datos local (Room).
+   - Una lista dinámica de actividades, obtenida de una base de datos local.
+   - Soporte dual para la gestión de datos:
+     - **SQLite**: Base de datos ligera para operaciones rápidas y acceso inicial.
+     - **Room**: Framework moderno para la persistencia de datos.
+       - Implementación de DAOs para manejar operaciones CRUD.
+       - Uso de `ViewModel` y `LiveData` para interactuar con los datos.
+       - Logs detallados para verificar la correcta ejecución de las operaciones.
    - Actividades personalizables como:
      - Comprar alimentos.
      - Recoger medicinas.
@@ -30,6 +36,7 @@ Aplicación Android para conectar personas mayores con voluntarios.
      - Paseo de mascotas.
      - Participación en eventos locales.
    - Cada actividad incluye un ícono representativo.
+   - Persistencia de datos asegurada para que las tareas se guarden y estén disponibles al reiniciar la aplicación.
 
 4. **Recordatorios Personalizados:**
    - Alarmas para medicamentos, citas médicas, y videollamadas.
@@ -52,11 +59,15 @@ Aplicación Android para conectar personas mayores con voluntarios.
 
 - **Lenguaje**: Kotlin
 - **Framework de desarrollo**: Jetpack Compose
-- **Base de datos local**: Room
-  - Entidades y DAO para gestionar las actividades de voluntariado.
-  - Uso de un repositorio central para interactuar con la base de datos.
+- **Bases de datos locales**:
+  - **SQLite**: Implementada con un helper para operaciones básicas.
+  - **Room**:
+    - Entidades, DAO y repositorios centralizados para la gestión eficiente de datos.
+    - Uso de `ViewModel` para interactuar con la base de datos en un entorno seguro y eficiente.
+    - Verificación de operaciones mediante logs.
 - **Gestión de Ciclo de Vida**:
-  - Uso de métodos como `onStart`, `onResume`, y `onStop` para optimizar el comportamiento de la aplicación.
+  - Métodos como `onStart`, `onResume`, y `onStop` para optimizar el comportamiento de la aplicación.
+  - Interacción con Room y SQLite en diferentes estados del ciclo de vida.
 - **Servicios externos**: APIs públicas para eventos comunitarios.
 - **Geolocalización**: Google Maps SDK
 - **Diseño**: Material Design 3
@@ -74,7 +85,8 @@ VeciCare busca impactar positivamente en la comunidad, promoviendo el apoyo mutu
 - **Conceptualización**: Completada.
 - **Desarrollo**: Implementadas las funcionalidades principales, incluyendo:
   - Ciclo de vida gestionado.
-  - Base de datos local con Room para actividades.
+  - Bases de datos locales: SQLite y Room.
+  - Logs detallados para comprobar el correcto funcionamiento de la persistencia.
 
 ---
 

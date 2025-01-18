@@ -37,8 +37,10 @@ import com.alonsocamina.vecicare.ui.theme.VeciCareTheme
 import com.alonsocamina.vecicare.ui.theme.gradientBrush
 import android.util.Log
 import androidx.room.Room
-import com.alonsocamina.vecicare.ui.theme.VolunteerDatabase
-import com.alonsocamina.vecicare.ui.theme.VolunteerTask
+import com.alonsocamina.vecicare.data.SQLiteHelper
+import com.alonsocamina.vecicare.data.VolunteerDatabase
+import com.alonsocamina.vecicare.data.VolunteerTask
+import com.alonsocamina.vecicare.data.VolunteerTaskViewModel
 
 
 data class ActivityItem(val name: String, val iconRes: Int)
@@ -70,6 +72,12 @@ class MainActivity : ComponentActivity() {
         ).build()
         Log.d("Database", "Base de datos inicializada")
 
+        //Inicializamos el ViewModel
+        val viewModel = VolunteerTaskViewModel(database.volunteerTaskDao())
+
+        //Prueba verificación de funcionalidad de Room
+        testDatabaseOperations(viewModel)
+
         //Creación de la interfaz del usuario
         setContent {
             VeciCareTheme {
@@ -86,7 +94,16 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         Log.d("LifecycleMainActivity", "onResume llamado: La app está visible e interactiva.")
-        //Aquí se podría actualizar/cargar datos en la interfaz, por ejemplo
+
+        //EJemplo de interacción con SQLiteHelper
+        val dbHelper = SQLiteHelper(this)
+
+        //Insertamos un dato de prueba
+        dbHelper.instertTask("Tarea ejemplo2")
+
+        //Obtenemos todas las tareas y las mostramos en el log
+        val tasks = dbHelper.getAllTasks()
+        Log.d("SQLiteHelper", "Tareas obtenidas: $tasks")
     }
 
     override fun onPause() {
@@ -109,6 +126,23 @@ class MainActivity : ComponentActivity() {
         super.onLowMemory()
         Log.d("LifecycleMainActivity", "onLowMemory llamado: El sistema tiene poca memoria.")
         //Implementación de lógica para liberar recursos no críticos, como limpiar cache por ejemplo
+    }
+
+    private fun testDatabaseOperations(viewModel: VolunteerTaskViewModel) {
+        //Insertamos nueva tarea
+        viewModel.insertTask(VolunteerTask(name = "Tarea de prueba 1", description = "test 1"))
+        viewModel.insertTask(VolunteerTask(name = "Tarea de prueba 2", description = "test 2"))
+
+        //Cargamos las tareas
+        viewModel.loadTasks()
+
+        //Actualizamos una tarea
+        val taskToUpdate = VolunteerTask(id = 1, name = "Tarea de prueba 1 actualizada", description = "test 3")
+        viewModel.updateTask(taskToUpdate)
+
+        //Eliminamos una tarea
+        val taskToDelete = VolunteerTask(id = 2, name = "Tarea de prueba 2 actualizada", description = "test 4")
+        viewModel.deleteTask(taskToDelete)
     }
 }
 

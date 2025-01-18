@@ -1,9 +1,9 @@
-package com.alonsocamina.vecicare.ui.theme
+package com.alonsocamina.vecicare.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity
+@Entity (tableName = "volunteer_tasks")
 data class VolunteerTask(
     @PrimaryKey(autoGenerate = true) val id: Int = 0, // ID autogenerate
     val name: String, // Nombre de la actividad
