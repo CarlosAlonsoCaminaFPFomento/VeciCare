@@ -1,4 +1,4 @@
-package com.alonsocamina.vecicare.data
+package com.alonsocamina.vecicare.data.local
 
 import android.content.Context
 import androidx.room.Database

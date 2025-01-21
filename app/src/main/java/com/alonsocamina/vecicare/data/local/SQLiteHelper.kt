@@ -1,4 +1,4 @@
-package com.alonsocamina.vecicare.data
+package com.alonsocamina.vecicare.data.local
 
 import android.content.ContentValues
 import android.content.Context
@@ -66,4 +66,10 @@ class SQLiteHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, 
         val db = writableDatabase
         return db.delete(TABLE_NAME, "$COLUMN_ID = ?", arrayOf(id.toString()))
     }
+
+    fun clearTable(): Int {
+        val db = writableDatabase
+        return db.delete(TABLE_NAME, null, null)
+    }
+
 }

@@ -1,4 +1,4 @@
-package com.alonsocamina.vecicare.data
+package com.alonsocamina.vecicare.data.local
 
 import android.util.Log
 import androidx.lifecycle.ViewModel

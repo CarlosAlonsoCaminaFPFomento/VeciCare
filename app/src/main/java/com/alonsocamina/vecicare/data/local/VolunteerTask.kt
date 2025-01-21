@@ -1,4 +1,4 @@
-package com.alonsocamina.vecicare.data
+package com.alonsocamina.vecicare.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

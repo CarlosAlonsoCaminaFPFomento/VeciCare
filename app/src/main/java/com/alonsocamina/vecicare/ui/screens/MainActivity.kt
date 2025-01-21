@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.alonsocamina.vecicare
+package com.alonsocamina.vecicare.ui.screens
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -36,11 +36,14 @@ import androidx.compose.ui.unit.dp
 import com.alonsocamina.vecicare.ui.theme.VeciCareTheme
 import com.alonsocamina.vecicare.ui.theme.gradientBrush
 import android.util.Log
+import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
-import com.alonsocamina.vecicare.data.SQLiteHelper
-import com.alonsocamina.vecicare.data.VolunteerDatabase
-import com.alonsocamina.vecicare.data.VolunteerTask
-import com.alonsocamina.vecicare.data.VolunteerTaskViewModel
+import com.alonsocamina.vecicare.R
+import com.alonsocamina.vecicare.data.local.SQLiteHelper
+import com.alonsocamina.vecicare.data.local.VolunteerDatabase
+import com.alonsocamina.vecicare.data.local.VolunteerTask
+import com.alonsocamina.vecicare.data.local.VolunteerTaskViewModel
+import com.alonsocamina.vecicare.ui.navigation.NavGraph
 
 
 data class ActivityItem(val name: String, val iconRes: Int)
@@ -81,7 +84,8 @@ class MainActivity : ComponentActivity() {
         //Creación de la interfaz del usuario
         setContent {
             VeciCareTheme {
-                MainScreen()
+                val navController = rememberNavController()
+                NavGraph(navController = navController)
             }
         }
     }
@@ -98,12 +102,40 @@ class MainActivity : ComponentActivity() {
         //EJemplo de interacción con SQLiteHelper
         val dbHelper = SQLiteHelper(this)
 
+        // Limpiar la tabla
+        val deletedRowsTable = dbHelper.clearTable()
+        Log.d("SQLiteHelper", "Limpieza completada. Filas eliminadas: $deletedRowsTable")
+
         //Insertamos un dato de prueba
         dbHelper.instertTask("Tarea ejemplo2")
 
         //Obtenemos todas las tareas y las mostramos en el log
         val tasks = dbHelper.getAllTasks()
         Log.d("SQLiteHelper", "Tareas obtenidas: $tasks")
+
+        // Insertamos datos iniciales para pruebas
+        val taskId1 = dbHelper.instertTask("Tarea de prueba 1")
+        val taskId2 = dbHelper.instertTask("Tarea de prueba 2")
+        Log.d("SQLiteHelper", "Tareas iniciales insertadas: $taskId1, $taskId2")
+
+        // Probamos actualizar una tarea
+        val updatedRows = dbHelper.updateTask(taskId1.toInt(), "Tarea actualizada")
+        if (updatedRows > 0) {
+            Log.d("SQLiteHelper", "Tarea con ID $taskId1 actualizada exitosamente.")
+        } else {
+            Log.d("SQLiteHelper", "Error al actualizar la tarea con ID $taskId1.")
+        }
+
+        // Probamos eliminar una tarea
+        val deletedRows = dbHelper.deleteTask(taskId2.toInt())
+        if (deletedRows > 0) {
+            Log.d("SQLiteHelper", "Tarea con ID $taskId2 eliminada exitosamente.")
+        } else {
+            Log.d("SQLiteHelper", "Error al eliminar la tarea con ID $taskId2.")
+        }
+
+        // Verificamos el estado actual de las tareas
+        Log.d("SQLiteHelper", "Tareas actuales en la base de datos: $tasks")
     }
 
     override fun onPause() {
