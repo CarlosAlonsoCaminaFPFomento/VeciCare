@@ -4,7 +4,12 @@ package com.alonsocamina.vecicare.ui.screens
 
 import android.app.DatePickerDialog
 import android.content.Context
+import android.content.res.Configuration
+import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -18,13 +23,84 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.alonsocamina.vecicare.R
+import com.alonsocamina.vecicare.data.local.usuarios.Usuario
+import com.alonsocamina.vecicare.data.local.usuarios.UsuariosHelper
+import com.alonsocamina.vecicare.ui.theme.VeciCareTheme
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
+class RegisterActivity : ComponentActivity() {
+    private lateinit var dbHelper: UsuariosHelper
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        dbHelper = UsuariosHelper(this)
+
+        Log.d("LifecycleRegisterActivity", "onCreate: Pantalla creada.")
+        setContent {
+            VeciCareTheme {
+                RegisterScreen(
+                    onRegisterSuccess = {
+                        Log.d("RegisterActivity", "Registro exitoso.")
+                        finish()
+                    }
+                )
+            }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.d("LifecycleRegisterActivity", "onStart: Pantalla visible.")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d("LifecycleRegisterActivity", "onResume: Pantalla interactiva.")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d("LifecycleRegisterActivity", "onPause: Pantalla no interactiva.")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d("LifecycleRegisterActivity", "onStop: Pantalla no visible.")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        dbHelper.close()
+        Log.d("LifecycleRegisterActivity", "onDestroy: Pantalla destruida y base de datos cerrada.")
+    }
+    override fun onLowMemory() {
+        super.onLowMemory()
+        Log.d("LifecycleRegisterActivity", "onLowMemory: El sistema tiene poca memoria.")
+        //Implementación de lógica para liberar recursos no críticos, como limpiar cache por ejemplo
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        when (newConfig.orientation) {
+            Configuration.ORIENTATION_LANDSCAPE -> {
+                Log.d("LifecycleRegisterActivity", "Screen Rotation: The screen is now in landscape mode.")
+            }
+            Configuration.ORIENTATION_PORTRAIT -> {
+                Log.d("LifecycleRegisterActivity", "Screen Rotation: The screen is now in portrait mode.")
+            }
+            else -> {
+                Log.d("LifecycleRegisterActivity", "Screen Rotation: The screen orientation has changed to an undefined mode.")
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(onRegisterSuccess: () -> Unit) {
     Scaffold(
@@ -61,6 +137,7 @@ fun RegisterScreen(onRegisterSuccess: () -> Unit) {
 @Composable
 fun RegisterContent(modifier: Modifier = Modifier, onRegisterSuccess: () -> Unit) {
     val context = LocalContext.current
+    val dbHelper = UsuariosHelper(context)
     val coroutineScope = rememberCoroutineScope()
 
     // Estados de los campos
@@ -68,7 +145,7 @@ fun RegisterContent(modifier: Modifier = Modifier, onRegisterSuccess: () -> Unit
     var surname by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
-    var countryCode by remember { mutableStateOf("+34") } // Prefijo predeterminado
+    var countryCode by remember { mutableStateOf("+34") }
     var address by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var birthDate by remember { mutableStateOf("") }
@@ -78,7 +155,7 @@ fun RegisterContent(modifier: Modifier = Modifier, onRegisterSuccess: () -> Unit
     var errorMessage by remember { mutableStateOf("") }
 
     val roles = listOf("Voluntario/a", "Beneficiario/a")
-    val countryCodes = listOf("+34", "+1", "+44", "+91", "+81") // Ejemplo de prefijos
+    val countryCodes = listOf("+34", "+1", "+44", "+91", "+81")
 
     Column(
         modifier = modifier
@@ -96,90 +173,69 @@ fun RegisterContent(modifier: Modifier = Modifier, onRegisterSuccess: () -> Unit
                 .size(120.dp)
         )
 
-        // Campos de texto
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
             label = { Text("Nombre") },
             modifier = Modifier.fillMaxWidth()
         )
-
         OutlinedTextField(
             value = surname,
             onValueChange = { surname = it },
             label = { Text("Apellido") },
             modifier = Modifier.fillMaxWidth()
         )
-
-        // Selector de fecha
         DatePickerField(
             label = "Fecha de Nacimiento",
             value = birthDate,
             onValueChange = { birthDate = it },
             context = context
         )
-
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("Correo Electrónico") },
             modifier = Modifier.fillMaxWidth()
         )
-
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Selector de código de país
-            Box(
+            DropdownMenuField(
+                label = "Código",
+                options = countryCodes,
+                selectedOption = countryCode,
+                onOptionSelected = { countryCode = it },
                 modifier = Modifier.weight(1.2f)
-            ) {
-                DropdownMenuField(
-                    label = "Código",
-                    options = countryCodes,
-                    selectedOption = countryCode,
-                    onOptionSelected = { countryCode = it }
-                )
-            }
-
-            // Campo de texto para el número de teléfono
+            )
             OutlinedTextField(
                 value = phoneNumber,
                 onValueChange = {
-                    // Permitir solo números
-                    if (it.all { char -> char.isDigit() }) {
-                        phoneNumber = it
-                    }
+                    if (it.all { char -> char.isDigit() }) phoneNumber = it
                 },
                 label = { Text("Teléfono") },
                 modifier = Modifier.weight(3f)
             )
         }
-
         OutlinedTextField(
             value = address,
             onValueChange = { address = it },
             label = { Text("Dirección") },
             modifier = Modifier.fillMaxWidth()
         )
-
         OutlinedTextField(
             value = description,
             onValueChange = { description = it },
             label = { Text("Descripción") },
             modifier = Modifier.fillMaxWidth()
         )
-
-        // Selector de rol
         DropdownMenuField(
             label = "Rol",
             options = roles,
             selectedOption = role,
             onOptionSelected = { role = it }
         )
-
-        // Contraseñas
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -194,8 +250,6 @@ fun RegisterContent(modifier: Modifier = Modifier, onRegisterSuccess: () -> Unit
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
         )
-
-        // Mensaje de error
         if (errorMessage.isNotEmpty()) {
             Text(
                 text = errorMessage,
@@ -203,25 +257,39 @@ fun RegisterContent(modifier: Modifier = Modifier, onRegisterSuccess: () -> Unit
                 style = MaterialTheme.typography.bodyMedium
             )
         }
-
         Spacer(modifier = Modifier.height(16.dp))
-
-        // Botón de registro
         Button(
             onClick = {
-                if (name.isEmpty() || surname.isEmpty() || email.isEmpty() ||
-                    phoneNumber.isEmpty() || address.isEmpty() || description.isEmpty() ||
-                    birthDate.isEmpty() || role.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+                if (name.isEmpty() || surname.isEmpty() || email.isEmpty() || phoneNumber.isEmpty() ||
+                    address.isEmpty() || description.isEmpty() || birthDate.isEmpty() || role.isEmpty() ||
+                    password.isEmpty() || confirmPassword.isEmpty()
+                ) {
                     errorMessage = "Por favor, completa todos los campos."
                 } else if (password != confirmPassword) {
                     errorMessage = "Las contraseñas no coinciden."
-                } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                    errorMessage = "Correo electrónico no válido."
-                } else if (phoneNumber.length < 8) {
-                    errorMessage = "Número de teléfono no válido."
                 } else {
-                    errorMessage = ""
-                    onRegisterSuccess()
+                    coroutineScope.launch {
+                        val user = Usuario(
+                            name = name,
+                            surname = surname,
+                            email = email.trim(),
+                            countryCode = countryCode,
+                            phoneNumber = phoneNumber.trim(),
+                            address = address.trim(),
+                            description = description.trim(),
+                            birthDate = birthDate.trim(),
+                            role = role.trim(),
+                            password = password.trim()
+                        )
+                        val result = dbHelper.insertUser(user)
+                        Log.d("RegisterDebug", "Usuario registrado: $user")
+                        if (result > 0) {
+                            Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
+                            onRegisterSuccess()
+                        } else {
+                            errorMessage = "Error al registrar. Inténtalo de nuevo."
+                        }
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -231,7 +299,7 @@ fun RegisterContent(modifier: Modifier = Modifier, onRegisterSuccess: () -> Unit
     }
 }
 
-
+// Composable personalizado para el selector de fecha
 @Composable
 fun DatePickerField(label: String, value: String, onValueChange: (String) -> Unit, context: Context) {
     val calendar = Calendar.getInstance()
@@ -266,11 +334,18 @@ fun DatePickerField(label: String, value: String, onValueChange: (String) -> Uni
     )
 }
 
+// Composable personalizado para el menú desplegable
 @Composable
-fun DropdownMenuField(label: String, options: List<String>, selectedOption: String, onOptionSelected: (String) -> Unit) {
+fun DropdownMenuField(
+    label: String,
+    options: List<String>,
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
     var expanded by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxWidth()) {
+    Box(modifier = modifier) {
         OutlinedTextField(
             value = selectedOption,
             onValueChange = {},

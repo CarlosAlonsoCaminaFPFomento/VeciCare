@@ -2,6 +2,7 @@
 
 package com.alonsocamina.vecicare.ui.screens
 
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -39,10 +40,12 @@ import android.util.Log
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.alonsocamina.vecicare.R
-import com.alonsocamina.vecicare.data.local.SQLiteHelper
+import com.alonsocamina.vecicare.VecicareApp
 import com.alonsocamina.vecicare.data.local.VolunteerDatabase
 import com.alonsocamina.vecicare.data.local.VolunteerTask
 import com.alonsocamina.vecicare.data.local.VolunteerTaskViewModel
+import com.alonsocamina.vecicare.data.local.usuarios.UsuariosHelper
+import com.alonsocamina.vecicare.data.local.usuarios.UsuariosRepository
 import com.alonsocamina.vecicare.ui.navigation.NavGraph
 
 
@@ -61,19 +64,24 @@ val activities = listOf(
 )
 
 class MainActivity : ComponentActivity() {
-    private lateinit var database: VolunteerDatabase //Base de datos
+    private lateinit var database: VolunteerDatabase //Base de datos (Testing Room)
+    private lateinit var usuariosRepository: UsuariosRepository //Base de datos de UsuariosVeciCare
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("LifecycleMainActivity", "onCreate llamado: Configuración inicial de la app.")
 
-        //Inicialización de Room
+        // Inicialización de la base de datos `UsuariosVeciCare`
+        val usuariosHelper = UsuariosHelper(this) // Helper de SQLite
+        usuariosRepository = UsuariosRepository(this) // Repositorio que usa el helper
+
+        //Inicialización de Room (testing)
         val database = Room.databaseBuilder(
             applicationContext,
             VolunteerDatabase::class.java,
-            "volunteer_database" //Nombre de la base de datos
+            "volunteer_database" //Nombre de la base de datos de testing Room
         ).build()
-        Log.d("Database", "Base de datos inicializada")
+        Log.d("DatabaseDebugRoom", "Base de datos inicializada")
 
         //Inicializamos el ViewModel
         val viewModel = VolunteerTaskViewModel(database.volunteerTaskDao())
@@ -85,7 +93,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             VeciCareTheme {
                 val navController = rememberNavController()
-                NavGraph(navController = navController)
+                NavGraph(
+                    usuariosRepository = usuariosRepository,
+                    navController = navController)
+                //(this.application as VecicareApp).numero APP**
             }
         }
     }
@@ -98,44 +109,6 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         Log.d("LifecycleMainActivity", "onResume llamado: La app está visible e interactiva.")
-
-        //EJemplo de interacción con SQLiteHelper
-        val dbHelper = SQLiteHelper(this)
-
-        // Limpiar la tabla
-        val deletedRowsTable = dbHelper.clearTable()
-        Log.d("SQLiteHelper", "Limpieza completada. Filas eliminadas: $deletedRowsTable")
-
-        //Insertamos un dato de prueba
-        dbHelper.instertTask("Tarea ejemplo2")
-
-        //Obtenemos todas las tareas y las mostramos en el log
-        val tasks = dbHelper.getAllTasks()
-        Log.d("SQLiteHelper", "Tareas obtenidas: $tasks")
-
-        // Insertamos datos iniciales para pruebas
-        val taskId1 = dbHelper.instertTask("Tarea de prueba 1")
-        val taskId2 = dbHelper.instertTask("Tarea de prueba 2")
-        Log.d("SQLiteHelper", "Tareas iniciales insertadas: $taskId1, $taskId2")
-
-        // Probamos actualizar una tarea
-        val updatedRows = dbHelper.updateTask(taskId1.toInt(), "Tarea actualizada")
-        if (updatedRows > 0) {
-            Log.d("SQLiteHelper", "Tarea con ID $taskId1 actualizada exitosamente.")
-        } else {
-            Log.d("SQLiteHelper", "Error al actualizar la tarea con ID $taskId1.")
-        }
-
-        // Probamos eliminar una tarea
-        val deletedRows = dbHelper.deleteTask(taskId2.toInt())
-        if (deletedRows > 0) {
-            Log.d("SQLiteHelper", "Tarea con ID $taskId2 eliminada exitosamente.")
-        } else {
-            Log.d("SQLiteHelper", "Error al eliminar la tarea con ID $taskId2.")
-        }
-
-        // Verificamos el estado actual de las tareas
-        Log.d("SQLiteHelper", "Tareas actuales en la base de datos: $tasks")
     }
 
     override fun onPause() {
@@ -160,6 +133,23 @@ class MainActivity : ComponentActivity() {
         //Implementación de lógica para liberar recursos no críticos, como limpiar cache por ejemplo
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        when (newConfig.orientation) {
+            Configuration.ORIENTATION_LANDSCAPE -> {
+                Log.d("LifecycleMainActivity", "Screen Rotation: The screen is now in landscape mode.")
+            }
+            Configuration.ORIENTATION_PORTRAIT -> {
+                Log.d("LifecycleMainActivity", "Screen Rotation: The screen is now in portrait mode.")
+            }
+            else -> {
+                Log.d("LifecycleMainActivity", "Screen Rotation: The screen orientation has changed to an undefined mode.")
+            }
+        }
+    }
+}
+
     private fun testDatabaseOperations(viewModel: VolunteerTaskViewModel) {
         //Insertamos nueva tarea
         viewModel.insertTask(VolunteerTask(name = "Tarea de prueba 1", description = "test 1"))
@@ -176,7 +166,7 @@ class MainActivity : ComponentActivity() {
         val taskToDelete = VolunteerTask(id = 2, name = "Tarea de prueba 2 actualizada", description = "test 4")
         viewModel.deleteTask(taskToDelete)
     }
-}
+
 
 @Composable
 fun MainScreen() {

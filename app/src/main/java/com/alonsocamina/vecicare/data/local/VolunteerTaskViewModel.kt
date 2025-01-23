@@ -13,55 +13,54 @@ class VolunteerTaskViewModel(private val dao: VolunteerTaskDao) : ViewModel() {
     //Cargamos todas las tareas desde la  base de datos
     fun loadTasks() {
         viewModelScope.launch {
-            try{
+            try {
                 tasks.clear()
                 tasks.addAll(dao.getAllTask())
-                Log.d("VolunteerTaskViewModel", "Tareas cargadas: ${tasks.joinToString{it.name}}")
-            }
-            catch (e : Exception) {
+                Log.d(
+                    "VolunteerTaskViewModel",
+                    "Tareas cargadas: ${tasks.joinToString { it.name }}"
+                )
+            } catch (e: Exception) {
                 Log.e("VolunteerTaskViewModel", "Error al cargar tareas", e)
             }
         }
     }
 
     //Actualizamos una tarea
-    fun updateTask(task : VolunteerTask) {
+    fun updateTask(task: VolunteerTask) {
         viewModelScope.launch {
-            try{
+            try {
                 dao.updateTask(task)
                 Log.d("VolunteerTaskViewModel", "Tarea actualizada: ${task.name}")
                 loadTasks()
-            }
-            catch (e : Exception){
+            } catch (e: Exception) {
                 Log.e("VolunteerTaskViewModel", "Error al actualizar tarea: ${task.name}", e)
             }
         }
     }
 
     //Eliminar una tarea
-    fun deleteTask(task : VolunteerTask) {
+    fun deleteTask(task: VolunteerTask) {
         viewModelScope.launch {
-            try{
+            try {
                 dao.deleteTask(task)
                 Log.d("VolunteerTaskViewModel", "Tarea eliminada: ${task.name}")
                 loadTasks()
-            }
-            catch (e : Exception){
+            } catch (e: Exception) {
                 Log.e("VolunteerTaskViewModel", "Error al eliminar tarea: ${task.name}", e)
             }
         }
     }
 
     //Insertar una nueva tarea
-    fun insertTask(task : VolunteerTask) {
+    fun insertTask(task: VolunteerTask) {
         viewModelScope.launch {
-            try{
+            try {
                 dao.insertTask(task)
                 Log.d("VolunteerTaskViewModel", "Tarea insertada: ${task.name}")
                 loadTasks()
-            }
-            catch (e : Exception) {
-                Log.e("VolunteerTaskViewModel","Error al insertar tarea: ${task.name}", e)
+            } catch (e: Exception) {
+                Log.e("VolunteerTaskViewModel", "Error al insertar tarea: ${task.name}", e)
             }
         }
     }

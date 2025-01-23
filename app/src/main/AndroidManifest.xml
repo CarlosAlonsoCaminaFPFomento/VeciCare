@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
+        android:name=".VecicareApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -17,9 +18,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VeciCare"
         tools:targetApi="31">
+
+        <!--MainActivity-->
         <activity
             android:name=".ui.screens.MainActivity"
             android:exported="true"
+            android:configChanges="orientation|screenSize"
             android:theme="@style/Theme.VeciCare"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -28,6 +32,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- RegisterActivity -->
+        <activity
+            android:name=".ui.screens.RegisterActivity"
+            android:label="Registro de Usuario"
+            android:configChanges="orientation|screenSize"
+            android:theme="@style/Theme.VeciCare" />
+
+        <!-- LoginActivity -->
+        <activity
+            android:name=".ui.screens.LoginActivity"
+            android:label="Inicio de Sesión"
+            android:configChanges="orientation|screenSize"
+            android:theme="@style/Theme.VeciCare" />
+
     </application>
 
 </manifest>

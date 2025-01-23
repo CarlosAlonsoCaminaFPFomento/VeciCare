@@ -1,48 +1,50 @@
 package com.alonsocamina.vecicare.ui.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.alonsocamina.vecicare.data.local.usuarios.UsuariosRepository
 import com.alonsocamina.vecicare.ui.screens.LoginScreen
 import com.alonsocamina.vecicare.ui.screens.MainScreen
 import com.alonsocamina.vecicare.ui.screens.RegisterScreen
 
 @Composable
-fun NavGraph(navController : NavHostController = rememberNavController()) {
+fun NavGraph(
+    usuariosRepository: UsuariosRepository,
+    navController: NavHostController = rememberNavController()
+) {
     NavHost(
         navController = navController,
         startDestination = "login" //Pantalla inicial
     ) {
-        //Pantalla de Login
+        // Pantalla de Login
         composable("login") {
             LoginScreen(
                 onLoginSuccess = {
-                    //Redirige al MainActivity después de iniciar sesión
+                    // Redirige al MainActivity después de iniciar sesión
                     navController.navigate("main_screen")
                 },
                 onRegister = {
-                    //Redirige a la pantalla de registro si no tiene cuenta
+                    // Redirige a la pantalla de registro si no tiene cuenta
                     navController.navigate("register")
                 },
                 validateUser = { email, password ->
-                    //Lógica de validación de usuario (EJEMPLO)
-                    email == "usuario@vecicare.com" && password == "123456"
+                    usuariosRepository.validateUser(email, password)
                 }
             )
         }
-        //Pantalla de registro
+        // Pantalla de registro
         composable("register") {
             RegisterScreen(onRegisterSuccess = {
-                //Regresa al login tras el registro exitoso
+                // Regresa al login tras el registro exitoso
                 navController.navigate("login") {
                     popUpTo("login") { inclusive = true }
                 }
             })
         }
-        //Pantalla principal
+        // Pantalla principal
         composable("main_screen") {
             MainScreen()
         }

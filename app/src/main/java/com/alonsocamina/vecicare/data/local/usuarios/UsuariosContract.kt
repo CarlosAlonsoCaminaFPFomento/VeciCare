@@ -10,8 +10,8 @@ object UsuariosContract {
         const val COLUMN_NAME = "nombre"
         const val COLUMN_SURNAME = "apellido"
         const val COLUMN_EMAIL = "email"
-        const val COLUMN_PHONE_NUMBER = "telefono"
         const val COLUMN_COUNTRY_CODE = "codigo_pais"
+        const val COLUMN_PHONE_NUMBER = "telefono"
         const val COLUMN_ADDRESS = "direccion"
         const val COLUMN_DESCRIPTION = "descripcion"
         const val COLUMN_BIRTH_DATE = "fecha_nacimiento"
@@ -26,12 +26,12 @@ object UsuariosContract {
         "${UsuarioEntry.COLUMN_NAME} TEXT NOT NULL," +
         "${UsuarioEntry.COLUMN_SURNAME} TEXT NOT NULL," +
         "${UsuarioEntry.COLUMN_EMAIL} TEXT UNIQUE NOT NULL," +
-        "${UsuarioEntry.COLUMN_PHONE_NUMBER} TEXT NOT NULL," +
         "${UsuarioEntry.COLUMN_COUNTRY_CODE} TEXT NOT NULL," +
+        "${UsuarioEntry.COLUMN_PHONE_NUMBER} TEXT NOT NULL," +
         "${UsuarioEntry.COLUMN_ADDRESS} TEXT NOT NULL," +
         "${UsuarioEntry.COLUMN_DESCRIPTION} TEXT," +
-        "${UsuarioEntry.COLUMN_BIRTH_DATE} TEXT NOT NULL" +
-        "${UsuarioEntry.COLUMN_ROLE} TEXT NOT NULL" +
+        "${UsuarioEntry.COLUMN_BIRTH_DATE} TEXT NOT NULL," +
+        "${UsuarioEntry.COLUMN_ROLE} TEXT NOT NULL," +
         "${UsuarioEntry.COLUMN_PASSWORD} TEXT NOT NULL" +
         ")"
 
