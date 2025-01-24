@@ -13,11 +13,36 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -27,10 +52,12 @@ import androidx.compose.ui.unit.dp
 import com.alonsocamina.vecicare.R
 import com.alonsocamina.vecicare.data.local.usuarios.Usuario
 import com.alonsocamina.vecicare.data.local.usuarios.UsuariosHelper
+import com.alonsocamina.vecicare.ui.shared.GradientBackground
 import com.alonsocamina.vecicare.ui.theme.VeciCareTheme
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 class RegisterActivity : ComponentActivity() {
     private lateinit var dbHelper: UsuariosHelper
@@ -77,6 +104,7 @@ class RegisterActivity : ComponentActivity() {
         dbHelper.close()
         Log.d("LifecycleRegisterActivity", "onDestroy: Pantalla destruida y base de datos cerrada.")
     }
+
     override fun onLowMemory() {
         super.onLowMemory()
         Log.d("LifecycleRegisterActivity", "onLowMemory: El sistema tiene poca memoria.")
@@ -88,13 +116,24 @@ class RegisterActivity : ComponentActivity() {
 
         when (newConfig.orientation) {
             Configuration.ORIENTATION_LANDSCAPE -> {
-                Log.d("LifecycleRegisterActivity", "Screen Rotation: The screen is now in landscape mode.")
+                Log.d(
+                    "LifecycleRegisterActivity",
+                    "Screen Rotation: The screen is now in landscape mode."
+                )
             }
+
             Configuration.ORIENTATION_PORTRAIT -> {
-                Log.d("LifecycleRegisterActivity", "Screen Rotation: The screen is now in portrait mode.")
+                Log.d(
+                    "LifecycleRegisterActivity",
+                    "Screen Rotation: The screen is now in portrait mode."
+                )
             }
+
             else -> {
-                Log.d("LifecycleRegisterActivity", "Screen Rotation: The screen orientation has changed to an undefined mode.")
+                Log.d(
+                    "LifecycleRegisterActivity",
+                    "Screen Rotation: The screen orientation has changed to an undefined mode."
+                )
             }
         }
     }
@@ -301,7 +340,12 @@ fun RegisterContent(modifier: Modifier = Modifier, onRegisterSuccess: () -> Unit
 
 // Composable personalizado para el selector de fecha
 @Composable
-fun DatePickerField(label: String, value: String, onValueChange: (String) -> Unit, context: Context) {
+fun DatePickerField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    context: Context
+) {
     val calendar = Calendar.getInstance()
     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
@@ -354,7 +398,10 @@ fun DropdownMenuField(
             modifier = Modifier.fillMaxWidth(),
             trailingIcon = {
                 IconButton(onClick = { expanded = !expanded }) {
-                    Icon(painter = painterResource(id = R.drawable.ic_arrow_down), contentDescription = "Desplegar")
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_arrow_down),
+                        contentDescription = "Desplegar"
+                    )
                 }
             }
         )

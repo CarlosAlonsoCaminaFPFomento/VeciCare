@@ -3,12 +3,14 @@ package com.alonsocamina.vecicare.data.local.usuarios
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import android.database.sqlite.SQLiteDatabase
 import android.provider.BaseColumns
 import android.util.Log
 import com.alonsocamina.vecicare.data.local.usuarios.UsuariosContract.UsuarioEntry
 
 class UsuariosRepository(context: Context) {
     private val dbHelper = UsuariosHelper(context)
+    private val db: SQLiteDatabase = dbHelper.writableDatabase
 
     //Función para insertar un usuario
     fun insertUsuario(usuario: Usuario): Boolean {

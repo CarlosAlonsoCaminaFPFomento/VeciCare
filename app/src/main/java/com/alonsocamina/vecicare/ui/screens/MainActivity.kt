@@ -1,93 +1,39 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package com.alonsocamina.vecicare.ui.screens
 
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.alonsocamina.vecicare.ui.theme.VeciCareTheme
-import com.alonsocamina.vecicare.ui.theme.gradientBrush
-import android.util.Log
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
-import com.alonsocamina.vecicare.R
-import com.alonsocamina.vecicare.VecicareApp
-import com.alonsocamina.vecicare.data.local.VolunteerDatabase
-import com.alonsocamina.vecicare.data.local.VolunteerTask
-import com.alonsocamina.vecicare.data.local.VolunteerTaskViewModel
-import com.alonsocamina.vecicare.data.local.usuarios.UsuariosHelper
+import com.alonsocamina.vecicare.data.local.tareas.VolunteerDatabase
+import com.alonsocamina.vecicare.data.local.tareas.VolunteerTaskViewModel
 import com.alonsocamina.vecicare.data.local.usuarios.UsuariosRepository
 import com.alonsocamina.vecicare.ui.navigation.NavGraph
-
-
-data class ActivityItem(val name: String, val iconRes: Int)
-
-val activities = listOf(
-    ActivityItem("Comprar alimentos", R.drawable.ic_supermarket),
-    ActivityItem("Recoger medicinas", R.drawable.ic_medicine),
-    ActivityItem("Acompañamiento virtual", R.drawable.ic_virtualmeeting),
-    ActivityItem("Acompañamiento presencial", R.drawable.ic_handshake),
-    ActivityItem("Trámites administrativos", R.drawable.ic_document),
-    ActivityItem("Asistencia técnica", R.drawable.ic_support),
-    ActivityItem("Paseo de mascotas", R.drawable.ic_pet),
-    ActivityItem("Pequeñas reparaciones", R.drawable.ic_repair),
-    ActivityItem("Eventos locales", R.drawable.ic_event)
-)
+import com.alonsocamina.vecicare.ui.theme.VeciCareTheme
 
 class MainActivity : ComponentActivity() {
-    private lateinit var database: VolunteerDatabase //Base de datos (Testing Room)
     private lateinit var usuariosRepository: UsuariosRepository //Base de datos de UsuariosVeciCare
+    private lateinit var volunteerTaskViewModel: VolunteerTaskViewModel //Base de datos VolunteerTask (Room)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("LifecycleMainActivity", "onCreate llamado: Configuración inicial de la app.")
 
         // Inicialización de la base de datos `UsuariosVeciCare`
-        val usuariosHelper = UsuariosHelper(this) // Helper de SQLite
         usuariosRepository = UsuariosRepository(this) // Repositorio que usa el helper
 
-        //Inicialización de Room (testing)
+        // Inicializar la base de datos Room
         val database = Room.databaseBuilder(
             applicationContext,
             VolunteerDatabase::class.java,
-            "volunteer_database" //Nombre de la base de datos de testing Room
+            "volunteer_database"
         ).build()
         Log.d("DatabaseDebugRoom", "Base de datos inicializada")
 
-        //Inicializamos el ViewModel
-        val viewModel = VolunteerTaskViewModel(database.volunteerTaskDao())
-
-        //Prueba verificación de funcionalidad de Room
-        testDatabaseOperations(viewModel)
+        // Inicializar el ViewModel
+        volunteerTaskViewModel = VolunteerTaskViewModel(database.volunteerTaskDao())
 
         //Creación de la interfaz del usuario
         setContent {
@@ -95,8 +41,9 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 NavGraph(
                     usuariosRepository = usuariosRepository,
-                    navController = navController)
-                //(this.application as VecicareApp).numero APP**
+                    taskViewModel = volunteerTaskViewModel,
+                    navController = navController
+                )
             }
         }
     }
@@ -124,7 +71,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d("LifecycleMainActivity", "onDestroy llamado: Liberando recursos antes de que la Activity se destruya.")
+        Log.d(
+            "LifecycleMainActivity",
+            "onDestroy llamado: Liberando recursos antes de que la Activity se destruya."
+        )
     }
 
     override fun onLowMemory() {
@@ -138,180 +88,29 @@ class MainActivity : ComponentActivity() {
 
         when (newConfig.orientation) {
             Configuration.ORIENTATION_LANDSCAPE -> {
-                Log.d("LifecycleMainActivity", "Screen Rotation: The screen is now in landscape mode.")
-            }
-            Configuration.ORIENTATION_PORTRAIT -> {
-                Log.d("LifecycleMainActivity", "Screen Rotation: The screen is now in portrait mode.")
-            }
-            else -> {
-                Log.d("LifecycleMainActivity", "Screen Rotation: The screen orientation has changed to an undefined mode.")
-            }
-        }
-    }
-}
-
-    private fun testDatabaseOperations(viewModel: VolunteerTaskViewModel) {
-        //Insertamos nueva tarea
-        viewModel.insertTask(VolunteerTask(name = "Tarea de prueba 1", description = "test 1"))
-        viewModel.insertTask(VolunteerTask(name = "Tarea de prueba 2", description = "test 2"))
-
-        //Cargamos las tareas
-        viewModel.loadTasks()
-
-        //Actualizamos una tarea
-        val taskToUpdate = VolunteerTask(id = 1, name = "Tarea de prueba 1 actualizada", description = "test 3")
-        viewModel.updateTask(taskToUpdate)
-
-        //Eliminamos una tarea
-        val taskToDelete = VolunteerTask(id = 2, name = "Tarea de prueba 2 actualizada", description = "test 4")
-        viewModel.deleteTask(taskToDelete)
-    }
-
-
-@Composable
-fun MainScreen() {
-    val darkTheme = isSystemInDarkTheme() //Detecta si el sistema está en modo oscuro o no
-    Scaffold(
-        modifier = Modifier.background(MaterialTheme.colorScheme.background), //Color de fondo del tema
-        topBar = {
-            TopAppBar(
-                title = {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "VeciCare",
-                            color = MaterialTheme.colorScheme.onPrimary, //Color del texto
-                            style = MaterialTheme.typography.headlineLarge //Tipografía personalizada
-                            )
-                    }
-                },
-                colors = androidx.compose.material3.TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary //Color de fondo
+                Log.d(
+                    "LifecycleMainActivity",
+                    "Screen Rotation: The screen is now in landscape mode."
                 )
-            )
-        }
-    ) { innerPadding ->
-        GradientBackground (darkTheme = darkTheme) {
-            MainContent(Modifier.padding(innerPadding))
-        }
-    }
-}
+            }
 
-@Composable
-fun MainContent (modifier: Modifier = Modifier) {
-    Column (
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        //Descripción funcional
-        Text(
-            text = "Conectando a la comunidad",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground, //Texto sobre el fondo
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
+            Configuration.ORIENTATION_PORTRAIT -> {
+                Log.d(
+                    "LifecycleMainActivity",
+                    "Screen Rotation: The screen is now in portrait mode."
+                )
+            }
 
-        //Imagen representativa
-        ThemedImage(
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-
-        //Lista de datos de prueba
-        Text(
-            text = "Actividades disponibles",
-            color = MaterialTheme.colorScheme.onBackground, //Texto sobre el fondo
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-        LazyColumn (
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ){
-            items(activities) { activity ->
-                ActivityCard(activity)
+            else -> {
+                Log.d(
+                    "LifecycleMainActivity",
+                    "Screen Rotation: The screen orientation has changed to an undefined mode."
+                )
             }
         }
     }
 }
 
-@Composable
-fun ActivityCard(activity: ActivityItem) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface // Fondo de la tarjeta
-        ),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(id = activity.iconRes),
-                contentDescription = null,
-                modifier = Modifier.size(32.dp)
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = activity.name,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
-    }
-}
 
-@Composable
-fun GradientBackground(darkTheme: Boolean, content: @Composable () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(brush = gradientBrush(darkTheme))
-    ){
-        content()
-    }
-}
-
-@Composable
-fun ThemedImage(modifier: Modifier = Modifier) {
-    // Determinar recurso de la imagen según el tema
-    val imageRes = if (isSystemInDarkTheme()) {
-        R.drawable.baseline_accessibility_new_24_black // Imagen negra
-    } else {
-        R.drawable.baseline_accessibility_new_24_white // Imagen blanca
-    }
-
-    // Renderizar imagen seleccionada
-    Image(
-        painter = painterResource(id = imageRes),
-        contentDescription = "Imagen representativa",
-        modifier = modifier.size(128.dp)
-    )
-}
-
-
-@Preview(showBackground = true, name = "Light Mode")
-@Composable
-private fun PreviewLightTheme() {
-    VeciCareTheme(darkTheme = false) {
-        MainScreen()
-    }
-}
-
-@Preview(showBackground = true, name = "Dark Mode")
-@Composable
-private fun PreviewDarkTheme() {
-    VeciCareTheme(darkTheme = true) {
-        MainScreen()
-    }
-}
 
 

@@ -5,23 +5,39 @@ package com.alonsocamina.vecicare.ui.screens
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.alonsocamina.vecicare.data.local.usuarios.UsuariosHelper
 import com.alonsocamina.vecicare.data.local.usuarios.UsuariosRepository
+import com.alonsocamina.vecicare.ui.shared.GradientBackground
 import com.alonsocamina.vecicare.ui.theme.VeciCareTheme
-import com.alonsocamina.vecicare.ui.theme.gradientBrush
 
 class LoginActivity : ComponentActivity() {
 
@@ -43,8 +59,11 @@ class LoginActivity : ComponentActivity() {
         setContent {
             VeciCareTheme {
                 LoginScreen(
-                    onLoginSuccess = {
-                        Log.d("LoginActivity", "Inicio de sesión con éxito.")
+                    onLoginSuccess = { userId, userRole ->
+                        Log.d(
+                            "LoginActivity",
+                            "Inicio de sesión con éxito. Usuario ID: $userId, Role: $userRole"
+                        )
                         finish()
                     },
                     onRegister = {
@@ -52,6 +71,11 @@ class LoginActivity : ComponentActivity() {
                     },
                     validateUser = { email, password ->
                         usuariosRepository.validateUser(email, password)
+                    },
+                    getUserDetails = { email ->
+                        usuariosRepository.getUsuarioByEmail(email)?.let {
+                            it.id to it.role
+                        }
                     }
                 )
             }
@@ -96,13 +120,24 @@ class LoginActivity : ComponentActivity() {
 
         when (newConfig.orientation) {
             Configuration.ORIENTATION_LANDSCAPE -> {
-                Log.d("LifecycleLoginActivity", "Screen Rotation: The screen is now in landscape mode.")
+                Log.d(
+                    "LifecycleLoginActivity",
+                    "Screen Rotation: The screen is now in landscape mode."
+                )
             }
+
             Configuration.ORIENTATION_PORTRAIT -> {
-                Log.d("LifecycleLoginActivity", "Screen Rotation: The screen is now in portrait mode.")
+                Log.d(
+                    "LifecycleLoginActivity",
+                    "Screen Rotation: The screen is now in portrait mode."
+                )
             }
+
             else -> {
-                Log.d("LifecycleLoginActivity", "Screen Rotation: The screen orientation has changed to an undefined mode.")
+                Log.d(
+                    "LifecycleLoginActivity",
+                    "Screen Rotation: The screen orientation has changed to an undefined mode."
+                )
             }
         }
     }
@@ -111,9 +146,10 @@ class LoginActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (userId: Int, userRole: String) -> Unit,
     onRegister: () -> Unit,
-    validateUser: (email: String, password: String) -> Boolean
+    validateUser: (email: String, password: String) -> Boolean,
+    getUserDetails: (email: String) -> Pair<Int, String>?
 ) {
     Scaffold(
         topBar = {
@@ -142,7 +178,8 @@ fun LoginScreen(
                 modifier = Modifier.padding(innerPadding),
                 onLoginSuccess = onLoginSuccess,
                 onRegister = onRegister,
-                validateUser = validateUser
+                validateUser = validateUser,
+                getUserDetails = getUserDetails
             )
         }
     }
@@ -151,14 +188,14 @@ fun LoginScreen(
 @Composable
 fun LoginContent(
     modifier: Modifier = Modifier,
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (userId: Int, userRole: String) -> Unit,
     onRegister: () -> Unit,
-    validateUser: (email: String, password: String) -> Boolean
+    validateUser: (email: String, password: String) -> Boolean,
+    getUserDetails: (email: String) -> Pair<Int, String>?
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
-    val context = LocalContext.current
 
     Column(
         modifier = modifier
@@ -203,11 +240,17 @@ fun LoginContent(
                     trimmedEmail.isEmpty() || trimmedPassword.isEmpty() -> {
                         errorMessage = "Por favor, completa todos los campos."
                     }
+
                     validateUser(trimmedEmail, trimmedPassword) -> {
-                        errorMessage = ""
-                        Toast.makeText(context, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
-                        onLoginSuccess()
+                        val userDetails = getUserDetails(trimmedEmail)
+                        if (userDetails != null) {
+                            val (userId, userRole) = userDetails
+                            onLoginSuccess(userId, userRole)
+                        } else {
+                            errorMessage = "No se pudieron obtener los detalles del usuario."
+                        }
                     }
+
                     else -> {
                         errorMessage = "Credenciales incorrectas. Inténtalo de nuevo."
                     }
@@ -231,3 +274,4 @@ fun LoginContent(
         }
     }
 }
+

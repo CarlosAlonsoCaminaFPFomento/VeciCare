@@ -2,51 +2,69 @@ package com.alonsocamina.vecicare.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.alonsocamina.vecicare.data.local.tareas.VolunteerTaskViewModel
 import com.alonsocamina.vecicare.data.local.usuarios.UsuariosRepository
-import com.alonsocamina.vecicare.ui.screens.LoginScreen
-import com.alonsocamina.vecicare.ui.screens.MainScreen
-import com.alonsocamina.vecicare.ui.screens.RegisterScreen
+import com.alonsocamina.vecicare.ui.screens.*
 
 @Composable
 fun NavGraph(
     usuariosRepository: UsuariosRepository,
-    navController: NavHostController = rememberNavController()
+    taskViewModel: VolunteerTaskViewModel,
+    navController: NavHostController
 ) {
     NavHost(
         navController = navController,
-        startDestination = "login" //Pantalla inicial
+        startDestination = "login"
     ) {
-        // Pantalla de Login
         composable("login") {
             LoginScreen(
-                onLoginSuccess = {
-                    // Redirige al MainActivity después de iniciar sesión
-                    navController.navigate("main_screen")
+                onLoginSuccess = { userId, userRole ->
+                    if (userRole == "Beneficiario/a") {
+                        navController.navigate("beneficiary_screen/$userId")
+                    } else {
+                        navController.navigate("volunteer_screen/$userId")
+                    }
                 },
                 onRegister = {
-                    // Redirige a la pantalla de registro si no tiene cuenta
                     navController.navigate("register")
                 },
                 validateUser = { email, password ->
                     usuariosRepository.validateUser(email, password)
+                },
+                getUserDetails = { email ->
+                    usuariosRepository.getUsuarioByEmail(email)?.let {
+                        it.id to it.role
+                    }
                 }
             )
         }
-        // Pantalla de registro
+
         composable("register") {
             RegisterScreen(onRegisterSuccess = {
-                // Regresa al login tras el registro exitoso
                 navController.navigate("login") {
                     popUpTo("login") { inclusive = true }
                 }
             })
         }
-        // Pantalla principal
-        composable("main_screen") {
-            MainScreen()
+
+        composable(
+            "beneficiary_screen/{beneficiaryId}",
+            arguments = listOf(navArgument("beneficiaryId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val beneficiaryId = backStackEntry.arguments?.getInt("beneficiaryId") ?: 0
+            BeneficiaryScreen(viewModel = taskViewModel, beneficiaryId = beneficiaryId)
+        }
+
+        composable(
+            "volunteer_screen/{volunteerId}",
+            arguments = listOf(navArgument("volunteerId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val volunteerId = backStackEntry.arguments?.getInt("volunteerId") ?: 0
+            VolunteerScreen(viewModel = taskViewModel, volunteerId = volunteerId)
         }
     }
 }
