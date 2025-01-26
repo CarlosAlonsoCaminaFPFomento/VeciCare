@@ -1,0 +1,35 @@
+package com.alonsocamina.vecicare.data.local.tareas.dao
+
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import com.alonsocamina.vecicare.data.local.tareas.entities.Beneficiary
+import com.alonsocamina.vecicare.data.local.tareas.entities.Volunteer
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface BeneficiaryDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBeneficiary(beneficiary: Beneficiary)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertVolunteer(volunteer: Volunteer)
+
+    @Query("SELECT * FROM beneficiaries WHERE id = :beneficiaryId")
+    fun getBeneficiaryById(beneficiaryId: Int): Flow<Beneficiary?>
+
+    @Query("SELECT * FROM beneficiaries")
+    fun getAllBeneficiaries(): Flow<List<Beneficiary>>
+
+    @Update
+    suspend fun updateBeneficiary(beneficiary: Beneficiary)
+
+    @Delete
+    suspend fun deleteBeneficiary(beneficiary: Beneficiary)
+
+
+
+}
