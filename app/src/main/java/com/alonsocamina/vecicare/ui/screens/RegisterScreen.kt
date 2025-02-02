@@ -108,32 +108,16 @@ class RegisterActivity : ComponentActivity() {
     override fun onLowMemory() {
         super.onLowMemory()
         Log.d("LifecycleRegisterActivity", "onLowMemory: El sistema tiene poca memoria.")
-        //Implementación de lógica para liberar recursos no críticos, como limpiar cache por ejemplo
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-
         when (newConfig.orientation) {
             Configuration.ORIENTATION_LANDSCAPE -> {
-                Log.d(
-                    "LifecycleRegisterActivity",
-                    "Screen Rotation: The screen is now in landscape mode."
-                )
+                Log.d("LifecycleRegisterActivity", "Pantalla en modo horizontal.")
             }
-
             Configuration.ORIENTATION_PORTRAIT -> {
-                Log.d(
-                    "LifecycleRegisterActivity",
-                    "Screen Rotation: The screen is now in portrait mode."
-                )
-            }
-
-            else -> {
-                Log.d(
-                    "LifecycleRegisterActivity",
-                    "Screen Rotation: The screen orientation has changed to an undefined mode."
-                )
+                Log.d("LifecycleRegisterActivity", "Pantalla en modo vertical.")
             }
         }
     }
@@ -207,11 +191,8 @@ fun RegisterContent(modifier: Modifier = Modifier, onRegisterSuccess: () -> Unit
         Image(
             painter = painterResource(id = R.drawable.ic_register_user),
             contentDescription = "Icono de registro",
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .size(120.dp)
+            modifier = Modifier.size(120.dp)
         )
-
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
@@ -299,16 +280,11 @@ fun RegisterContent(modifier: Modifier = Modifier, onRegisterSuccess: () -> Unit
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
-                if (name.isEmpty() || surname.isEmpty() || email.isEmpty() || phoneNumber.isEmpty() ||
-                    address.isEmpty() || description.isEmpty() || birthDate.isEmpty() || role.isEmpty() ||
-                    password.isEmpty() || confirmPassword.isEmpty()
-                ) {
+                if (name.isEmpty() || surname.isEmpty() || email.isEmpty() || password != confirmPassword) {
                     errorMessage = "Por favor, completa todos los campos."
-                } else if (password != confirmPassword) {
-                    errorMessage = "Las contraseñas no coinciden."
                 } else {
                     coroutineScope.launch {
-                        val user = Usuario(
+                        val usuario = Usuario(
                             name = name,
                             surname = surname,
                             email = email.trim(),
@@ -320,13 +296,18 @@ fun RegisterContent(modifier: Modifier = Modifier, onRegisterSuccess: () -> Unit
                             role = role.trim(),
                             password = password.trim()
                         )
-                        val result = dbHelper.insertUser(user)
-                        Log.d("RegisterDebug", "Usuario registrado: $user")
-                        if (result > 0) {
-                            Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
-                            onRegisterSuccess()
-                        } else {
-                            errorMessage = "Error al registrar. Inténtalo de nuevo."
+                        try {
+                            val result = dbHelper.insertUser(usuario)
+                            if (result > 0) {
+                                Log.d("RegisterScreen", "Usuario registrado: $usuario")
+                                Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
+                                onRegisterSuccess()
+                            } else {
+                                errorMessage = "Error al registrar. Inténtalo de nuevo."
+                            }
+                        } catch (e: Exception) {
+                            Log.e("RegisterScreen", "Error al registrar usuario", e)
+                            errorMessage = "Ocurrió un error."
                         }
                     }
                 }

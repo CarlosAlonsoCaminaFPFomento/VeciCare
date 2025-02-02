@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     id("com.google.dagger.hilt.android")
+    kotlin("plugin.serialization") version "2.1.0"
 }
 
 
@@ -50,6 +51,7 @@ android {
 dependencies {
     // Material Design 3
     implementation(libs.material3)
+    implementation (libs.androidx.material.icons.extended)
 
     // Compose Core
     implementation(platform(libs.androidx.compose.bom))
@@ -81,8 +83,16 @@ dependencies {
     //Jetpack Navigation
     implementation(libs.androidx.navigation.compose)
 
-    //Hilt REPASAR PARA COMO METERLO
-    implementation("com.google.dagger:hilt-android:2.51.1")
-    ksp("com.google.dagger:hilt-android-compiler:2.51")
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    //Hilt
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.android.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    //Serialization
+    implementation(libs.kotlinx.serialization.json)
+
+    //Retrofit
+    implementation(libs.retrofit)
+    implementation(libs.retrofit2.kotlinx.serialization.converter)
+
 }

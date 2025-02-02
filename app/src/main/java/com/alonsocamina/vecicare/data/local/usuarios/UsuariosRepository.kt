@@ -70,6 +70,33 @@ class UsuariosRepository(context: Context) {
         return usuario
     }
 
+    // Función para obtener el id y role de un usuario por email
+    fun getUserDetailsByEmail(email: String): Pair<Int, String>? {
+        val db = dbHelper.readableDatabase
+
+        val cursor = db.query(
+            UsuarioEntry.TABLE_NAME,
+            arrayOf(BaseColumns._ID, UsuarioEntry.COLUMN_ROLE), // Solo columnas necesarias
+            "${UsuarioEntry.COLUMN_EMAIL} = ?",
+            arrayOf(email),
+            null,
+            null,
+            null
+        )
+
+        val userDetails = if (cursor.moveToFirst()) {
+            val id = cursor.getInt(cursor.getColumnIndexOrThrow(BaseColumns._ID))
+            val role = cursor.getString(cursor.getColumnIndexOrThrow(UsuarioEntry.COLUMN_ROLE))
+            id to role
+        } else {
+            null
+        }
+
+        cursor.close()
+        db.close()
+        return userDetails
+    }
+
     fun validateUser(email: String, password: String): Boolean {
         val db = dbHelper.readableDatabase
 
@@ -93,4 +120,41 @@ class UsuariosRepository(context: Context) {
         cursor.close()
         return isValid
     }
+
+    fun getAllUsuarios(): List<Usuario> {
+        val usuarios = mutableListOf<Usuario>()
+        val db = dbHelper.readableDatabase
+        val cursor = db.query(
+            UsuariosContract.UsuarioEntry.TABLE_NAME,
+            null, // Todas las columnas
+            null, // Sin cláusula WHERE
+            null,
+            null,
+            null,
+            null
+        )
+
+        while (cursor.moveToNext()) {
+            val usuario = Usuario(
+                id = cursor.getInt(cursor.getColumnIndexOrThrow(BaseColumns._ID)),
+                name = cursor.getString(cursor.getColumnIndexOrThrow(UsuariosContract.UsuarioEntry.COLUMN_NAME)),
+                surname = cursor.getString(cursor.getColumnIndexOrThrow(UsuariosContract.UsuarioEntry.COLUMN_SURNAME)),
+                email = cursor.getString(cursor.getColumnIndexOrThrow(UsuariosContract.UsuarioEntry.COLUMN_EMAIL)),
+                phoneNumber = cursor.getString(cursor.getColumnIndexOrThrow(UsuariosContract.UsuarioEntry.COLUMN_PHONE_NUMBER)),
+                countryCode = cursor.getString(cursor.getColumnIndexOrThrow(UsuariosContract.UsuarioEntry.COLUMN_COUNTRY_CODE)),
+                address = cursor.getString(cursor.getColumnIndexOrThrow(UsuariosContract.UsuarioEntry.COLUMN_ADDRESS)),
+                description = cursor.getString(cursor.getColumnIndexOrThrow(UsuariosContract.UsuarioEntry.COLUMN_DESCRIPTION)),
+                birthDate = cursor.getString(cursor.getColumnIndexOrThrow(UsuariosContract.UsuarioEntry.COLUMN_BIRTH_DATE)),
+                role = cursor.getString(cursor.getColumnIndexOrThrow(UsuariosContract.UsuarioEntry.COLUMN_ROLE)),
+                password = cursor.getString(cursor.getColumnIndexOrThrow(UsuariosContract.UsuarioEntry.COLUMN_PASSWORD))
+            )
+            usuarios.add(usuario)
+        }
+
+        cursor.close()
+        db.close()
+
+        return usuarios
+    }
+
 }

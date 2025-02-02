@@ -1,5 +1,6 @@
 package com.alonsocamina.vecicare.ui.shared
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.alonsocamina.vecicare.R
+import com.alonsocamina.vecicare.data.local.tareas.entities.Task
 import com.alonsocamina.vecicare.ui.theme.VeciCareTheme
 import com.alonsocamina.vecicare.ui.theme.gradientBrush
 
@@ -36,8 +38,13 @@ val activities = listOf(
 @Composable
 fun SharedMainScreen(
     title: String,
-    onItemClick: (ActivityItem) -> Unit
+    tasks: List<ActivityItem>,
+    onItemClick: (ActivityItem) -> Unit,
+    contentSections: @Composable (() -> Unit)? = null
 ) {
+    Log.d("SharedMainScreen", "Mostrando la pantalla con título: $title")
+    Log.d("SharedMainScreen", "Cantidad de actividades cargadas: ${tasks.size}")
+
     VeciCareTheme {
         Scaffold(
             topBar = {
@@ -61,53 +68,72 @@ fun SharedMainScreen(
             },
         ) { innerPadding ->
             GradientBackground(darkTheme = isSystemInDarkTheme()) {
-                MainContent(
-                    modifier = Modifier.padding(innerPadding),
-                    onItemClick = onItemClick
-                )
+                Column(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Conectando a la comunidad",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                    ThemedImage(modifier = Modifier.align(Alignment.CenterHorizontally))
+
+                    Text(
+                        text = title,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+
+                    contentSections?.invoke()
+
+                    ActivityList(activities = tasks, onItemClick = onItemClick)
+                }
             }
         }
     }
 }
 
 @Composable
-fun MainContent(modifier: Modifier = Modifier, onItemClick: (ActivityItem) -> Unit) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = "Conectando a la comunidad",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-        ThemedImage(modifier = Modifier.align(Alignment.CenterHorizontally))
-        Text(
-            text = "Actividades disponibles",
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-        ActivityList(onItemClick = onItemClick)
+fun Section(title: String, tasks: List<Task>, onClick: ((Task) -> Unit)? = null) {
+    Text(text = title, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(vertical = 8.dp))
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(tasks) { task ->
+            TaskCard(task = task, buttonText = onClick?.let { "Aceptar" }, onClick = onClick?.let { { it(task) } })
+        }
     }
 }
 
+
 @Composable
-fun ActivityList(onItemClick: (ActivityItem) -> Unit) {
+fun ActivityList(activities: List<ActivityItem>, onItemClick: (ActivityItem) -> Unit) {
+    Log.d("ActivityList", "Mostrando lista de actividades. Total: ${activities.size}")
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(activities) { activity ->
-            ActivityCard(activity = activity, onClick = { onItemClick(activity) })
+            Log.d("ActivityList", "Mostrando actividad: ${activity.name}")
+            ActivityCard(activity = activity, onClick = {
+                try {
+                    onItemClick(activity)
+                    Log.d("ActivityList", "Actividad seleccionada correctamente: ${activity.name}")
+                } catch (e: Exception) {
+                    Log.e("ActivityList", "Error al seleccionar actividad: ${e.message}")
+                }
+            })
         }
     }
 }
 
 @Composable
 fun ActivityCard(activity: ActivityItem, onClick: () -> Unit) {
+    Log.d("ActivityCard", "Creando tarjeta para la actividad: ${activity.name}")
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -133,14 +159,38 @@ fun ActivityCard(activity: ActivityItem, onClick: () -> Unit) {
             Text(
                 text = activity.name,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
             )
         }
     }
 }
 
 @Composable
+fun TaskCard(task: Task, buttonText: String? = null, onClick: (() -> Unit)? = null) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Tarea: ${task.name}")
+            Text("Descripción: ${task.description}")
+            Text("Estado: ${task.status}")
+            if (buttonText != null && onClick != null) {
+                Button(onClick = onClick, modifier = Modifier.padding(top = 8.dp)) {
+                    Text(buttonText)
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun GradientBackground(darkTheme: Boolean, content: @Composable () -> Unit) {
+    Log.d("GradientBackground", "Configurando fondo con tema oscuro: $darkTheme")
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -157,6 +207,7 @@ fun ThemedImage(modifier: Modifier = Modifier) {
     } else {
         R.drawable.baseline_accessibility_new_24_white
     }
+    Log.d("ThemedImage", "Mostrando imagen con recurso: $imageRes")
     Image(
         painter = painterResource(id = imageRes),
         contentDescription = "Imagen representativa",
@@ -170,9 +221,10 @@ fun MessageBar(
     onDismiss: () -> Unit,
     durationMillis: Long = 5000 // Duración en milisegundos (5 segundos por defecto)
 ) {
-    // Usamos LaunchedEffect para gestionar la desaparición automática
+    Log.d("MessageBar", "Mostrando barra de mensaje: $message")
     LaunchedEffect(message) {
         kotlinx.coroutines.delay(durationMillis)
+        Log.d("MessageBar", "Ocultando barra de mensaje tras $durationMillis ms")
         onDismiss()
     }
 
@@ -210,5 +262,3 @@ fun MessageBar(
         }
     }
 }
-
-
