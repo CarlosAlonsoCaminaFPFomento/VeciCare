@@ -1,154 +1,172 @@
+// BeneficiaryScreen.kt
 package com.alonsocamina.vecicare.ui.screens
 
-import android.util.Log
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.alonsocamina.vecicare.data.local.tareas.viewmodel.TaskViewModel
-import com.alonsocamina.vecicare.ui.shared.ActivityItem
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.alonsocamina.vecicare.data.local.tareas.dao.TaskDao
+import com.alonsocamina.vecicare.data.local.tareas.entities.Task
+import com.alonsocamina.vecicare.ui.shared.Section
 import com.alonsocamina.vecicare.ui.shared.SharedMainScreen
 import com.alonsocamina.vecicare.ui.shared.activities
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 
 @Composable
 fun BeneficiaryScreen(
-    taskViewModel: TaskViewModel = viewModel(),
-    beneficiaryId: Int
+    beneficiaryId: Int,
+    viewModel: BeneficiaryScreenViewModel
 ) {
-    val activitiesList = activities // Lista de actividades predefinidas
+    val beneficiaryTasks by viewModel.beneficiaryTasks.collectAsState()
+    val tasksAwaitingConfirmation by viewModel.tasksAwaitingConfirmation.collectAsState()
+    val taskHistory by viewModel.taskHistory.collectAsState()
+
     var showDialog by remember { mutableStateOf(false) }
-    var selectedActivity by remember { mutableStateOf<ActivityItem?>(null) }
-    var message by remember { mutableStateOf<String?>(null) }
+    var selectedActivity by remember { mutableStateOf<String?>(null) }
 
-    // Estado para las tareas del beneficiario
-    val beneficiaryTasks by taskViewModel.getTasksByBeneficiary(beneficiaryId).collectAsState(initial = emptyList())
-    val pendingTaskTypes = beneficiaryTasks.filter { it.status == "PENDING" }.map { it.taskTypeCode }.toSet()
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Mostrar tareas pendientes en la parte superior
-        if (beneficiaryTasks.isNotEmpty()) {
-            Text(
-                text = "Peticiones de ayuda",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                textAlign = TextAlign.Center
-            )
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(beneficiaryTasks) { task ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        elevation = CardDefaults.cardElevation(4.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Tarea: ${task.name}")
-                            Text("Estado: ${task.status}")
-                            if (task.volunteerId != null) {
-                                Text("Asignado a voluntario ID: ${task.volunteerId}")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Pantalla principal con lista de actividades
-        SharedMainScreen(
-            title = "Solicitar Ayuda",
-            tasks = activitiesList.filterNot { activity ->
-                val taskTypeCode = TaskViewModel.TaskTypeCodes.codes[activity.name]
-                taskTypeCode != null && taskTypeCode in pendingTaskTypes // Excluir actividades ya pendientes
-            },
-            onItemClick = { activity ->
-                selectedActivity = activity
-                showDialog = true
-            }
-        )
+    // Cargar las tareas al iniciar la pantalla
+    LaunchedEffect(Unit) {
+        viewModel.loadTasksForBeneficiary(beneficiaryId)
     }
 
-    // Diálogo para confirmar solicitud de tarea
+    SharedMainScreen(
+        title = "Solicitar Ayuda",
+        tasks = activities.filterNot { activity ->
+            val taskTypeCode = viewModel.taskTypeCodes[activity.name]
+            beneficiaryTasks.any { it.taskTypeCode == taskTypeCode && it.status != "COMPLETED" }
+        },
+        onItemClick = { activity ->
+            selectedActivity = activity.name
+            showDialog = true
+        },
+        contentSections = {
+            if (tasksAwaitingConfirmation.isNotEmpty()) {
+                Section(
+                    title = "Tareas en Espera de Confirmación",
+                    tasks = tasksAwaitingConfirmation
+                ) { task ->
+                    viewModel.confirmTaskCompletion(task.id)
+                }
+            }
+
+            if (beneficiaryTasks.isNotEmpty()) {
+                Section(title = "Estado de tus solicitudes de ayuda", tasks = beneficiaryTasks)
+            }
+
+            if (taskHistory.isNotEmpty()) {
+                Section(title = "Historial de tareas", tasks = taskHistory)
+            }
+        }
+    )
+
+    // Diálogo de confirmación
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text(text = "Confirmar Acción") },
-            text = { Text(text = "¿Estás seguro de que quieres solicitar ayuda con ${selectedActivity?.name}?") },
+            title = { Text("Confirmar Solicitud") },
+            text = { Text("¿Estás seguro de que deseas solicitar ayuda con $selectedActivity?") },
             confirmButton = {
-                Button(
-                    onClick = {
-                        try {
-                            selectedActivity?.let { activity ->
-                                val taskTypeCode = TaskViewModel.TaskTypeCodes.codes[activity.name]
-                                if (taskTypeCode != null) {
-                                    taskViewModel.createTask(
-                                        taskName = activity.name,
-                                        description = "Ayuda solicitada para ${activity.name}",
-                                        status = "PENDING",
-                                        beneficiaryId = beneficiaryId
-                                    )
-                                    message = "Solicitud creada con éxito para ${activity.name}."
-                                } else {
-                                    Log.e("BeneficiaryScreen", "Código de tipo de tarea no encontrado: ${activity.name}")
-                                }
-                            }
-                            showDialog = false
-                        } catch (e: Exception) {
-                            Log.e("BeneficiaryScreen", "Error al solicitar ayuda: ${e.localizedMessage}")
-                        }
+                Button(onClick = {
+                    val taskTypeCode = viewModel.taskTypeCodes[selectedActivity!!]
+                    if (taskTypeCode != null) {
+                        viewModel.createTask(
+                            Task(
+                                taskTypeCode = taskTypeCode,
+                                name = selectedActivity!!,
+                                description = "Ayuda solicitada para $selectedActivity",
+                                status = "PENDING",
+                                beneficiaryId = beneficiaryId
+                            )
+                        )
                     }
-                ) {
-                    Text(text = "Sí")
+                    showDialog = false
+                }) {
+                    Text("Sí")
                 }
             },
             dismissButton = {
                 Button(onClick = { showDialog = false }) {
-                    Text(text = "No")
+                    Text("No")
                 }
             }
         )
     }
+}
 
-    // Mostrar mensajes
-    message?.let {
-        AlertDialog(
-            onDismissRequest = { message = null },
-            title = { Text("Mensaje") },
-            text = { Text(it) },
-            confirmButton = {
-                Button(onClick = { message = null }) {
-                    Text("Aceptar")
-                }
+// BeneficiaryScreenViewModel
+class BeneficiaryScreenViewModel(private val taskDao: TaskDao) : ViewModel() {
+
+    private val _beneficiaryTasks = MutableStateFlow<List<Task>>(emptyList())
+    val beneficiaryTasks: StateFlow<List<Task>> get() = _beneficiaryTasks
+
+    private val _tasksAwaitingConfirmation = MutableStateFlow<List<Task>>(emptyList())
+    val tasksAwaitingConfirmation: StateFlow<List<Task>> get() = _tasksAwaitingConfirmation
+
+    private val _taskHistory = MutableStateFlow<List<Task>>(emptyList())
+    val taskHistory: StateFlow<List<Task>> get() = _taskHistory
+
+    val taskTypeCodes = mapOf(
+        "Comprar alimentos" to 1,
+        "Recoger medicinas" to 2,
+        "Acompañamiento virtual" to 3,
+        "Acompañamiento presencial" to 4,
+        "Trámites administrativos" to 5,
+        "Asistencia técnica" to 6,
+        "Paseo de mascotas" to 7,
+        "Pequeñas reparaciones" to 8,
+        "Eventos locales" to 9
+    )
+
+    fun loadTasksForBeneficiary(beneficiaryId: Int) {
+        viewModelScope.launch {
+            taskDao.getTasksByBeneficiary(beneficiaryId).collect { tasks ->
+                _beneficiaryTasks.value =
+                    tasks.filter { it.status == "PENDING" || it.status == "IN_PROGRESS" }
+                _tasksAwaitingConfirmation.value =
+                    tasks.filter { it.status == "AWAITING_CONFIRMATION" }
+                _taskHistory.value = tasks.filter { it.status == "COMPLETED" }
             }
-        )
+        }
+    }
+
+    fun confirmTaskCompletion(taskId: Int) {
+        viewModelScope.launch {
+            val task = taskDao.getTaskById(taskId).firstOrNull()
+            if (task != null && task.status == "AWAITING_CONFIRMATION") {
+                val updatedTask = task.copy(status = "COMPLETED")
+                taskDao.updateTask(updatedTask)
+                loadTasksForBeneficiary(task.beneficiaryId!!)
+            }
+        }
+    }
+
+    fun createTask(task: Task) {
+        viewModelScope.launch {
+            taskDao.insertTask(task)
+            loadTasksForBeneficiary(task.beneficiaryId!!)
+        }
+    }
+}
+
+class BeneficiaryViewModelFactory(
+    private val taskDao: TaskDao
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(BeneficiaryScreenViewModel::class.java)) {
+            return BeneficiaryScreenViewModel(taskDao) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

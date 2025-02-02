@@ -1,26 +1,23 @@
 package com.alonsocamina.vecicare.ui.navigation
 
 import android.util.Log
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.alonsocamina.vecicare.data.local.VeciCareDatabase
 import com.alonsocamina.vecicare.data.local.usuarios.UsuariosRepository
 import com.alonsocamina.vecicare.ui.screens.*
-import com.alonsocamina.vecicare.data.local.tareas.viewmodel.BeneficiaryViewModel
-import com.alonsocamina.vecicare.data.local.tareas.viewmodel.TaskHistoryViewModel
-import com.alonsocamina.vecicare.data.local.tareas.viewmodel.TaskViewModel
-import com.alonsocamina.vecicare.data.local.tareas.viewmodel.VolunteerViewModel
+import com.alonsocamina.vecicare.ui.screens.BeneficiaryViewModelFactory
+import com.alonsocamina.vecicare.ui.screens.VolunteerViewModelFactory
 
 @Composable
 fun NavGraph(
     usuariosRepository: UsuariosRepository,
-    taskViewModel: TaskViewModel,
-    beneficiaryViewModel: BeneficiaryViewModel,
-    volunteerViewModel: VolunteerViewModel,
-    taskHistoryViewModel: TaskHistoryViewModel,
     navController: NavHostController
 ) {
     Log.d("NavGraph", "Configurando NavHost con startDestination 'login'.")
@@ -76,10 +73,16 @@ fun NavGraph(
         ) { backStackEntry ->
             val beneficiaryId = backStackEntry.arguments?.getInt("beneficiaryId") ?: 0
             Log.d("NavGraph", "Navegando a BeneficiaryScreen con beneficiaryId=$beneficiaryId.")
-            BeneficiaryScreen(
-                beneficiaryId = beneficiaryId,
-                taskViewModel = taskViewModel
-            )
+
+            val context = LocalContext.current // 🔹 Mejor forma de obtener el contexto
+            val taskDao = VeciCareDatabase.getDatabase(context).taskDao()
+            val viewModel: BeneficiaryScreenViewModel = viewModel(factory = BeneficiaryViewModelFactory(taskDao))
+
+            LaunchedEffect(beneficiaryId) { // 🔹 Usamos el beneficiaryId para evitar re-ejecuciones innecesarias
+                viewModel.loadTasksForBeneficiary(beneficiaryId)
+            }
+
+            BeneficiaryScreen(beneficiaryId = beneficiaryId, viewModel = viewModel)
         }
 
         composable(
@@ -88,10 +91,16 @@ fun NavGraph(
         ) { backStackEntry ->
             val volunteerId = backStackEntry.arguments?.getInt("volunteerId") ?: 0
             Log.d("NavGraph", "Navegando a VolunteerScreen con volunteerId=$volunteerId.")
-            VolunteerScreen(
-                volunteerId = volunteerId,
-                taskViewModel = taskViewModel
-            )
+
+            val context = LocalContext.current // 🔹 Mejor forma de obtener el contexto
+            val taskDao = VeciCareDatabase.getDatabase(context).taskDao()
+            val viewModel: VolunteerScreenViewModel = viewModel(factory = VolunteerViewModelFactory(taskDao))
+
+            LaunchedEffect(volunteerId) { // 🔹 Usamos el volunteerId para evitar re-ejecuciones innecesarias
+                viewModel.updateTasks()
+            }
+
+            VolunteerScreen(volunteerId = volunteerId, viewModel = viewModel)
         }
     }
 }

@@ -5,28 +5,21 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import com.alonsocamina.vecicare.data.local.VeciCareDatabase
 import com.alonsocamina.vecicare.data.local.tareas.entities.Beneficiary
 import com.alonsocamina.vecicare.data.local.tareas.entities.Volunteer
-import com.alonsocamina.vecicare.data.local.tareas.viewmodel.BeneficiaryViewModel
-import com.alonsocamina.vecicare.data.local.tareas.viewmodel.TaskHistoryViewModel
-import com.alonsocamina.vecicare.data.local.tareas.viewmodel.TaskViewModel
-import com.alonsocamina.vecicare.data.local.tareas.viewmodel.VolunteerViewModel
 import com.alonsocamina.vecicare.data.local.usuarios.UsuariosRepository
 import com.alonsocamina.vecicare.ui.navigation.NavGraph
 import com.alonsocamina.vecicare.ui.theme.VeciCareTheme
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private lateinit var usuariosRepository: UsuariosRepository // Base de datos de UsuariosVeciCare
-    private lateinit var taskViewModel: TaskViewModel
-    private lateinit var beneficiaryViewModel: BeneficiaryViewModel
-    private lateinit var volunteerViewModel: VolunteerViewModel
-    private lateinit var taskHistoryViewModel: TaskHistoryViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,12 +34,6 @@ class MainActivity : ComponentActivity() {
         // Sincronizar usuarios
         syncUsersToRoom()
 
-        // Inicialización de los ViewModels directamente
-        taskViewModel = TaskViewModel(database.taskDao())
-        beneficiaryViewModel = BeneficiaryViewModel(database.beneficiaryDao())
-        volunteerViewModel = VolunteerViewModel(database.volunteerDao())
-        taskHistoryViewModel = TaskHistoryViewModel(database.taskHistoryDao())
-
         // Creación de la interfaz del usuario
         setContent {
             VeciCareTheme {
@@ -54,10 +41,6 @@ class MainActivity : ComponentActivity() {
 
                 NavGraph(
                     usuariosRepository = usuariosRepository,
-                    taskViewModel = taskViewModel,
-                    beneficiaryViewModel = beneficiaryViewModel,
-                    volunteerViewModel = volunteerViewModel,
-                    taskHistoryViewModel = taskHistoryViewModel,
                     navController = navController
                 )
             }
