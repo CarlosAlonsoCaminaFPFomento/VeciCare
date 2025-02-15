@@ -3,7 +3,7 @@ package com.alonsocamina.vecicare.ui.screens
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alonsocamina.vecicare.domain.ChuckJoke
-import com.alonsocamina.vecicare.domain.GetChuckJokeUseCase
+import com.alonsocamina.vecicare.domain.chucknorrisusecase.GetChuckJokeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
